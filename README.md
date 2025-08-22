@@ -1,16 +1,10 @@
 # bin_tag_app
 
-A new Flutter project.
+Simple Flutter application for reading NFC tags.
 
-## Getting Started
+## Usage
 
-This project is a starting point for a Flutter application.
+1. Press the NFC button.
+2. Hold a tag near your device to read its contents.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The detected tag data is displayed on screen.
