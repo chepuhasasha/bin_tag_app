@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
-// ВАЖНО: подключаем платформенные библиотеки 4.x
 import 'package:nfc_manager/nfc_manager_android.dart';
 import 'package:nfc_manager/nfc_manager_ios.dart';
 
 void main() => runApp(const MaterialApp(home: Home()));
-
 class Home extends StatefulWidget {
   const Home({super.key});
   @override
