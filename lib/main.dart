@@ -43,6 +43,7 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   String _text = 'Ожидание…';
+  bool _sessionStarted = false;
 
   @override
   void initState() {
@@ -52,7 +53,9 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   void dispose() {
-    NfcManager.instance.stopSession();
+    if (_sessionStarted) {
+      NfcManager.instance.stopSession();
+    }
     super.dispose();
   }
 
@@ -62,6 +65,7 @@ class _ScanScreenState extends State<ScanScreen> {
       return;
     }
 
+    _sessionStarted = true;
     NfcManager.instance.startSession(
       pollingOptions: const {
         NfcPollingOption.iso14443,
@@ -77,6 +81,7 @@ class _ScanScreenState extends State<ScanScreen> {
         } catch (e) {
           setState(() => _text = 'Ошибка: $e');
         } finally {
+          _sessionStarted = false;
           NfcManager.instance.stopSession();
         }
       },
