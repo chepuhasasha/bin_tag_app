@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager/ndef_record.dart';
 
 void main() {
   runApp(const NfcReaderApp());
@@ -46,7 +47,7 @@ class _HomePageState extends State<HomePage> {
           if (ndef != null) {
             final ndefMessage = await ndef.read();
             final records = ndefMessage.records.map((record) {
-              if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown &&
+              if (record.typeNameFormat == TypeNameFormat.wellKnown &&
                   record.type.length == 1 &&
                   record.type.first == 0x54 &&
                   record.payload.isNotEmpty) {
