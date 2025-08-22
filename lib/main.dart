@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 
@@ -40,7 +42,7 @@ class _HomePageState extends State<HomePage> {
     await NfcManager.instance.startSession(
       onDiscovered: (NfcTag tag) async {
         // ignore: invalid_use_of_protected_member
-        setState(() => _tag = tag.data.toString());
+        setState(() => _tag = jsonEncode(tag.data));
         await NfcManager.instance.stopSession();
       },
       pollingOptions: {
