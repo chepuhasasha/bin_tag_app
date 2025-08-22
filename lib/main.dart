@@ -4,17 +4,59 @@ import 'package:nfc_manager/nfc_manager_android.dart';
 import 'package:nfc_manager/nfc_manager_ios.dart';
 
 void main() => runApp(const MaterialApp(home: Home()));
-class Home extends StatefulWidget {
+
+class Home extends StatelessWidget {
   const Home({super.key});
+
   @override
-  State<Home> createState() => _HomeState();
+  Widget build(BuildContext c) => Scaffold(
+        appBar: AppBar(title: const Text('NFC UID')),
+        body: const Center(
+          child: Text('Поднесите метку и нажмите кнопку'),
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(c).push(
+                  MaterialPageRoute(
+                    builder: (_) => ScanScreen(key: UniqueKey()),
+                  ),
+                );
+              },
+              child: const Text('Scan'),
+            ),
+          ),
+        ),
+      );
 }
 
-class _HomeState extends State<Home> {
-  String _text = 'Поднесите метку и нажмите кнопку';
+class ScanScreen extends StatefulWidget {
+  const ScanScreen({super.key});
+
+  @override
+  State<ScanScreen> createState() => _ScanScreenState();
+}
+
+class _ScanScreenState extends State<ScanScreen> {
+  String _text = 'Ожидание…';
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void dispose() {
+    NfcManager.instance.stopSession();
+    super.dispose();
+  }
 
   Future<void> _start() async {
-    setState(() => _text = 'Ожидание…');
     if (!await NfcManager.instance.isAvailable()) {
       setState(() => _text = 'NFC недоступен');
       return;
@@ -61,11 +103,22 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext c) => Scaffold(
-        appBar: AppBar(title: const Text('NFC UID')),
-        body: Center(child: SelectableText(_text)),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _start,
-          child: const Icon(Icons.nfc),
+        appBar: AppBar(title: const Text('Сканирование')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_text == 'Ожидание…') ...[
+                const SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: CircularProgressIndicator(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              SelectableText(_text),
+            ],
+          ),
         ),
       );
 }
