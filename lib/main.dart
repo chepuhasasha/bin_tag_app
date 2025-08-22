@@ -47,18 +47,22 @@ class _HomePageState extends State<HomePage> {
           final ndef = Ndef.from(tag);
           if (ndef != null) {
             final ndefMessage = await ndef.read();
-            final records = ndefMessage.records.map((record) {
-              if (record.typeNameFormat == TypeNameFormat.wellKnown &&
-                  record.type.length == 1 &&
-                  record.type.first == 0x54 &&
-                  record.payload.isNotEmpty) {
-                final payload = record.payload;
-                final langLength = payload.first;
-                return utf8.decode(payload.skip(1 + langLength).toList());
-              }
-              return record.payload.toString();
-            }).join('\n');
-            setState(() => _tag = records);
+            if (ndefMessage != null) {
+              final records = ndefMessage.records.map((record) {
+                if (record.typeNameFormat == TypeNameFormat.wellKnown &&
+                    record.type.length == 1 &&
+                    record.type.first == 0x54 &&
+                    record.payload.isNotEmpty) {
+                  final payload = record.payload;
+                  final langLength = payload.first;
+                  return utf8.decode(payload.skip(1 + langLength).toList());
+                }
+                return record.payload.toString();
+              }).join('\n');
+              setState(() => _tag = records);
+            } else {
+              setState(() => _tag = 'No NDEF records');
+            }
           } else {
             // ignore: invalid_use_of_protected_member
             setState(() => _tag = jsonEncode(tag.data));
