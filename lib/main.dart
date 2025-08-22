@@ -3,41 +3,60 @@ import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/nfc_manager_android.dart';
 import 'package:nfc_manager/nfc_manager_ios.dart';
 
-void main() => runApp(const MaterialApp(home: Home()));
+void main() => runApp(const App());
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFF1F3F6),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFF1F3F6),
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: WidgetStatePropertyAll(Colors.white),
+            foregroundColor: WidgetStatePropertyAll(Colors.black),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+          ),
+        ),
+      ),
+      home: const Home(),
+    );
+  }
+}
 
 class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
   Widget build(BuildContext c) => Scaffold(
-    appBar: AppBar(title: const Text('NFC UID')),
-    body: const Center(child: Text('Поднесите метку и нажмите кнопку')),
-    bottomNavigationBar: Padding(
-      padding: const EdgeInsets.all(0),
-      child: SizedBox(
-        width: double.infinity,
-        height: 100,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.zero, // убирает скругление
-            ),
+        appBar: AppBar(title: const Text('NFC UID')),
+        body: const Center(child: Text('Поднесите метку и нажмите кнопку')),
+        bottomNavigationBar: SizedBox(
+          width: double.infinity,
+          height: 100,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(c).push(
+                MaterialPageRoute(builder: (_) => const ScanScreen()),
+              );
+            },
+            child: const Text('Scan'),
           ),
-          onPressed: () {
-            Navigator.of(c).push(
-              MaterialPageRoute(builder: (_) => ScanScreen(key: UniqueKey())),
-            );
-          },
-          child: const Text('Scan'),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
-
   @override
   State<ScanScreen> createState() => _ScanScreenState();
 }
@@ -65,7 +84,6 @@ class _ScanScreenState extends State<ScanScreen> {
       setState(() => _text = 'NFC недоступен');
       return;
     }
-
     _sessionStarted = true;
     NfcManager.instance.startSession(
       pollingOptions: const {
@@ -76,11 +94,8 @@ class _ScanScreenState extends State<ScanScreen> {
       onDiscovered: (tag) async {
         try {
           final id = _uid(tag);
-          setState(
-            () => _text = (id != null && id.isNotEmpty)
-                ? 'UID: ${_hex(id)}'
-                : 'UID не найден',
-          );
+          setState(() => _text =
+              (id != null && id.isNotEmpty) ? 'UID: ${_hex(id)}' : 'UID не найден');
         } catch (e) {
           setState(() => _text = 'Ошибка: $e');
         } finally {
@@ -91,20 +106,13 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
-  // Универсальный UID для 4.x
   List<int>? _uid(NfcTag tag) {
-    // ANDROID: общий id тега
     final aTag = NfcTagAndroid.from(tag);
     if (aTag != null && aTag.id.isNotEmpty) return aTag.id;
-
-    // iOS: пробуем основные технологии
     if (MiFareIos.from(tag) case final t?) return t.identifier;
-    if (Iso15693Ios.from(tag) case final t?) {
-      return t.identifier; // или t.icSerialNumber
-    }
+    if (Iso15693Ios.from(tag) case final t?) return t.identifier;
     if (Iso7816Ios.from(tag) case final t?) return t.identifier;
     if (FeliCaIos.from(tag) case final t?) return t.currentIDm;
-
     return null;
   }
 
@@ -113,22 +121,18 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext c) => Scaffold(
-    appBar: AppBar(title: const Text('Сканирование')),
-    body: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_text == 'Ожидание…') ...[
-            const SizedBox(
-              width: 80,
-              height: 80,
-              child: CircularProgressIndicator(),
-            ),
-            const SizedBox(height: 16),
-          ],
-          SelectableText(_text),
-        ],
-      ),
-    ),
-  );
+        appBar: AppBar(title: const Text('Сканирование')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_text == 'Ожидание…') ...[
+                const SizedBox(width: 80, height: 80, child: CircularProgressIndicator()),
+                const SizedBox(height: 16),
+              ],
+              SelectableText(_text),
+            ],
+          ),
+        ),
+      );
 }
