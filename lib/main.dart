@@ -22,7 +22,9 @@ class Home extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.of(c).push(
-                  MaterialPageRoute(builder: (_) => const ScanScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => ScanScreen(key: UniqueKey()),
+                  ),
                 );
               },
               child: const Text('Scan'),
