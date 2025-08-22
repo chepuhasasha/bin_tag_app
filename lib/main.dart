@@ -1,94 +1,73 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
-import 'package:nfc_manager/ndef_record.dart';
-import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
+// ВАЖНО: подключаем платформенные библиотеки 4.x
+import 'package:nfc_manager/nfc_manager_android.dart';
+import 'package:nfc_manager/nfc_manager_ios.dart';
 
-void main() {
-  runApp(const NfcReaderApp());
-}
+void main() => runApp(const MaterialApp(home: Home()));
 
-class NfcReaderApp extends StatelessWidget {
-  const NfcReaderApp({super.key});
-
+class Home extends StatefulWidget {
+  const Home({super.key});
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NFC Reader',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const HomePage(),
-    );
-  }
+  State<Home> createState() => _HomeState();
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class _HomeState extends State<Home> {
+  String _text = 'Поднесите метку и нажмите кнопку';
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  String _tag = 'Scan an NFC tag';
-
-  Future<void> _startSession() async {
-    setState(() => _tag = 'Waiting for tag...');
+  Future<void> _start() async {
+    setState(() => _text = 'Ожидание…');
     if (!await NfcManager.instance.isAvailable()) {
-      setState(() => _tag = 'NFC not available');
+      setState(() => _text = 'NFC недоступен');
       return;
     }
 
     NfcManager.instance.startSession(
-      onDiscovered: (NfcTag tag) async {
-        try {
-          final ndef = Ndef.from(tag);
-          if (ndef != null) {
-            final ndefMessage = await ndef.read();
-            if (ndefMessage != null) {
-              final records = ndefMessage.records.map((record) {
-                if (record.typeNameFormat == TypeNameFormat.wellKnown &&
-                    record.type.length == 1 &&
-                    record.type.first == 0x54 &&
-                    record.payload.isNotEmpty) {
-                  final payload = record.payload;
-                  final langLength = payload.first;
-                  return utf8.decode(payload.skip(1 + langLength).toList());
-                }
-                return record.payload.toString();
-              }).join('\n');
-              setState(() => _tag = records);
-            } else {
-              setState(() => _tag = 'No NDEF records');
-            }
-          } else {
-            // ignore: invalid_use_of_protected_member
-            setState(() => _tag = jsonEncode(tag.data));
-          }
-        } catch (e) {
-          setState(() => _tag = 'Error reading tag: $e');
-        }
-        NfcManager.instance.stopSession();
-      },
-      pollingOptions: {
+      pollingOptions: const {
         NfcPollingOption.iso14443,
         NfcPollingOption.iso15693,
         NfcPollingOption.iso18092,
       },
+      onDiscovered: (tag) async {
+        try {
+          final id = _uid(tag);
+          setState(() => _text = (id != null && id.isNotEmpty)
+              ? 'UID: ${_hex(id)}'
+              : 'UID не найден');
+        } catch (e) {
+          setState(() => _text = 'Ошибка: $e');
+        } finally {
+          NfcManager.instance.stopSession();
+        }
+      },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('NFC Reader')),
-      body: Center(child: Text(_tag)),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _startSession,
-        child: const Icon(Icons.nfc),
-      ),
-    );
+  // Универсальный UID для 4.x
+  List<int>? _uid(NfcTag tag) {
+    // ANDROID: общий id тега
+    final aTag = NfcTagAndroid.from(tag);
+    if (aTag != null && aTag.id.isNotEmpty) return aTag.id;
+
+    // iOS: пробуем основные технологии
+    if (MiFareIos.from(tag) case final t?) return t.identifier;
+    if (Iso15693Ios.from(tag) case final t?) return t.identifier; // или t.icSerialNumber
+    if (Iso7816Ios.from(tag) case final t?) return t.identifier;
+    if (FeliCaIos.from(tag) case final t?) return t.currentIDm;
+
+    return null;
   }
+
+  String _hex(List<int> b) =>
+      b.map((x) => x.toRadixString(16).padLeft(2, '0').toUpperCase()).join(':');
+
+  @override
+  Widget build(BuildContext c) => Scaffold(
+        appBar: AppBar(title: const Text('NFC UID')),
+        body: Center(child: SelectableText(_text)),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _start,
+          child: const Icon(Icons.nfc),
+        ),
+      );
 }
