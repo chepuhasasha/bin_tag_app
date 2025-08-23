@@ -38,21 +38,26 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext c) => Scaffold(
-        appBar: AppBar(title: const Text('NFC UID')),
-        body: const Center(child: Text('Поднесите метку и нажмите кнопку')),
-        bottomNavigationBar: SizedBox(
+    appBar: AppBar(title: const Text('NFC UID')),
+    body: const Center(child: Text('Поднесите метку и нажмите кнопку')),
+    bottomNavigationBar: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(0),
+        child: SizedBox(
           width: double.infinity,
           height: 100,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.of(c).push(
-                MaterialPageRoute(builder: (_) => const ScanScreen()),
-              );
+              Navigator.of(
+                c,
+              ).push(MaterialPageRoute(builder: (_) => const ScanScreen()));
             },
             child: const Text('Scan'),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class ScanScreen extends StatefulWidget {
@@ -94,8 +99,11 @@ class _ScanScreenState extends State<ScanScreen> {
       onDiscovered: (tag) async {
         try {
           final id = _uid(tag);
-          setState(() => _text =
-              (id != null && id.isNotEmpty) ? 'UID: ${_hex(id)}' : 'UID не найден');
+          setState(
+            () => _text = (id != null && id.isNotEmpty)
+                ? 'UID: ${_hex(id)}'
+                : 'UID не найден',
+          );
         } catch (e) {
           setState(() => _text = 'Ошибка: $e');
         } finally {
@@ -121,18 +129,22 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext c) => Scaffold(
-        appBar: AppBar(title: const Text('Сканирование')),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_text == 'Ожидание…') ...[
-                const SizedBox(width: 80, height: 80, child: CircularProgressIndicator()),
-                const SizedBox(height: 16),
-              ],
-              SelectableText(_text),
-            ],
-          ),
-        ),
-      );
+    appBar: AppBar(title: const Text('Сканирование')),
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_text == 'Ожидание…') ...[
+            const SizedBox(
+              width: 80,
+              height: 80,
+              child: CircularProgressIndicator(),
+            ),
+            const SizedBox(height: 16),
+          ],
+          SelectableText(_text),
+        ],
+      ),
+    ),
+  );
 }
